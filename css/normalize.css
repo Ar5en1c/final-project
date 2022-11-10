@@ -45,12 +45,6 @@ body {
   text-align: center;
 }
 
-.filter {
-  display: inline-block;
-  position: relative;
-  color: black;
-}
-
 .parent {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
