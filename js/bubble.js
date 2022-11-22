@@ -1,83 +1,114 @@
-const margin_bc = { top: 30, right: 30, bottom: 15, left: 50 },
-  width_bc = 500 - margin_bc.left - margin_bc.right,
-  height_bc = 490 - margin_bc.top - margin_bc.bottom;
+// set the dimensions and margins of the graph
+// const margin = { top: 10, right: 30, bottom: 30, left: 60 },
+//   width = 460 - margin.left - margin.right,
+//   height = 400 - margin.top - margin.bottom;
 
-// append the svg object to the body of the page
-const svg_bc = d3
+// append the bubble_svg object to the body of the page
+const bubble_svg = d3
   .select("#bubble")
   .append("svg")
-  .attr("width", width_bc + margin_bc.left + margin_bc.right)
-  .attr("height", height_bc + margin_bc.top + margin_bc.bottom)
+  .attr("width", 500)
+  .attr("height", 500)
   .append("g")
-  .attr("transform", `translate(${margin_bc.left},${margin_bc.top})`);
+  .attr("transform", `translate(50,50)`);
 
 //Read the data
-d3.csv(
-  "https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/4_ThreeNum.csv"
-).then(function (data) {
-  // Add X axis
-  const x = d3.scaleLinear().domain([0, 12000]).range([0, width_bc]);
-  svg_bc
+d3.csv("./data/trend.csv").then(function (data) {
+  // group the data: I want to draw one line per group
+  const sumstat = d3.group(data, (d) => d.SEX); // nest function allows to group the calculation per level of a factor
+
+  // Add X axis --> it is a date format
+  const x = d3
+    .scaleLinear()
+    .domain(
+      d3.extent(data, function (d) {
+        return String(d.year);
+      })
+    )
+    .range([0, width]);
+  bubble_svg
     .append("g")
-    .attr("transform", `translate(0, ${height_bc})`)
-    .call(d3.axisBottom(x));
+    .attr("transform", `translate(0, ${height})`)
+    .call(d3.axisBottom(x).ticks(5));
 
   // Add Y axis
-  const y = d3.scaleLinear().domain([35, 90]).range([height_bc, 0]);
-  svg_bc.append("g").call(d3.axisLeft(y));
+  const y = d3
+    .scaleLinear()
+    .domain([
+      0,
+      d3.max(data, function (d) {
+        return +d.count;
+      }),
+    ])
+    .range([height, 0]);
+  bubble_svg.append("g").call(d3.axisLeft(y));
 
-  // Add a scale for bubble size
-  const z = d3.scaleLinear().domain([200000, 1310000000]).range([4, 40]);
+  // color palette
+  const color = d3.scaleOrdinal().range(["#FF50EC", "#3361FF"]);
 
-  // Add a scale for bubble color
-  const myColor = d3
-    .scaleOrdinal()
-    .domain(["Asia", "Europe", "Americas", "Africa", "Oceania"])
-    .range(d3.schemeSet2);
-
-  // -1- Create a tooltip div that is hidden by default:
+  // Create a tooltip
+  // ----------------
   const tooltip = d3
-    .select("#bubble")
+    .select("#stack_plot")
     .append("div")
     .style("opacity", 0)
     .attr("class", "tooltip")
     .attr("style", "position: absolute; opacity: 0;")
-    .style("background-color", "black")
+    .style("background-color", "#333333")
+    .style("border", "solid")
+    .style("border-width", "1px")
     .style("border-radius", "5px")
-    .style("padding", "10px")
-    .style("color", "white");
+    .style("padding", "10px");
 
-  // -2- Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
-  const showTooltip = function (event, d) {
-    tooltip.transition().duration(200);
+  // Three function that change the tooltip when user hover / move / leave a cell
+  const mouseover = function (event, d) {
+    // const subgroupName = d3.select(this.parentNode).datum().key;
+    const subgroupValue = d[0];
+    console.log("testing", subgroupValue);
+    tooltip.transition().duration(100);
     tooltip
       .style("opacity", 1)
-      .html("Country: " + d.country)
+      .html("Gender: " + subgroupValue)
       .style("left", event.x / 2 + "px")
       .style("top", event.y / 2 + 30 + "px");
   };
-  const moveTooltip = function (event, d) {
-    tooltip
-      .style("left", event.x / 3.5 + "px")
-      .style("top", event.y / 2 + 10 + "px");
+  const mousemove = function (event, d) {
+    tooltip.style("left", event.x + "px").style("top", event.y + 300 + "px");
   };
-  const hideTooltip = function (event, d) {
-    tooltip.transition().duration(200).style("opacity", 0);
+  const mouseleave = function (event, d) {
+    tooltip.transition().duration(800).style("opacity", 0);
   };
 
-  // Add dots
-  svg_bc
-    .append("g")
-    .selectAll("dot")
-    .data(data)
-    .join("circle")
-    .attr("class", "bubbles")
-    .attr("cx", (d) => x(d.gdpPercap))
-    .attr("cy", (d) => y(d.lifeExp))
-    .attr("r", (d) => z(d.pop))
-    .style("fill", (d) => myColor(d.continent))
-    // -3- Trigger the functions
-    .on("mouseover", showTooltip)
-    .on("mousemove", moveTooltip)
-    .on("mouseleave", hideTooltip);
+  bubble_svg
+  .append("text")
+  .attr("x", width / 2)
+  .attr("y", margin.top - 55)
+  .attr("text-anchor", "middle")
+  .style("font-size", "16px")
+  .style("text-decoration", "underline")
+  .text("Number of Cases vs year");
+
+  // Draw the line
+  bubble_svg
+    .selectAll(".line")
+    .data(sumstat)
+    .join("path")
+    .attr("fill", "none")
+    .attr("stroke", function (d) {
+      return color(d[0]);
+    })
+    .attr("stroke-width", 1.5)
+    .attr("d", function (d) {
+      return d3
+        .line()
+        .x(function (d) {
+          return x(d.year);
+        })
+        .y(function (d) {
+          return y(+d.count);
+        })(d[1]);
+    })
+    .on("mouseover", mouseover)
+    .on("mousemove", mousemove)
+    .on("mouseleave", mouseleave);
 });

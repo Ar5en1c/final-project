@@ -1,41 +1,53 @@
-const svg = d3
-  .select("#linegraph")
-  .append("svg")
-  .attr("width", 500)
-  .attr("height", 500)
-  .append("g")
-  .attr("transform", `translate(60,60)`);
+const line_svg = d3.select("#linegraph").append("svg");
+function draw_cood(data) {
+  console.log("linechart");
+  line_svg.selectAll("*").remove();
+  data = data.map(function (d) {
+    return {
+      cholesterol: d.cholesterol,
+      creatinine: d.creatinine,
+      glycemia: d.glycemia,
+      triglycerides: d.triglycerides,
+      age_group: d.age_group,
+    };
+  });
 
-// Parse the Data
-d3.csv(
-  "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/iris.csv"
-).then(function (data) {
+  line_svg
+    .attr("width", 500)
+    .attr("height", 500)
+    .append("g")
+    .attr("transform", `translate(60,60)`);
+
+  // console.log('data', data)
   // Color scale: give me a specie name, I return a color
   const color = d3
     .scaleOrdinal()
-    .domain(["setosa", "versicolor", "virginica"])
+    .domain(["Juvenile", "Adult", "Elderly"])
     .range(["#440154ff", "#21908dff", "#fde725ff"]);
 
   // Here I set the list of dimension manually to control the order of axis:
-  dimensions = ["Petal_Length", "Petal_Width", "Sepal_Length", "Sepal_Width"];
+  dimensions = ["cholesterol", "creatinine", "glycemia", "triglycerides"];
 
   // For each dimension, I build a linear scale. I store all in a y object
   const y = {};
   for (i in dimensions) {
-    name = dimensions[i];
-    y[name] = d3
+    col = dimensions[i];
+    y[col] = d3
       .scaleLinear()
-      .domain([0, 8]) // --> Same axis range for each group
-      // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
-      .range([height, 0]);
+      .domain([0, 2000]) //.domain( [d3.extent(data, function(d) { return +d[name]; })] )
+      //.domain( [d3.extent(data, function(d) { return +d[col]; })] )
+      .range([460, 50]);
   }
-
+  // console.log('y: ', y)
   // Build the X scale -> it find the best position for each Y axis
-  x = d3.scalePoint().range([0, width]).domain(dimensions);
+  const x = d3
+    .scalePoint()
+    .range([50, width + 50])
+    .domain(dimensions);
 
   // Highlight the specie that is hovered
   const highlight = function (event, d) {
-    selected_specie = d.Species;
+    selected_specie = d.age_group;
 
     // first every group turns grey
     d3.selectAll(".line")
@@ -58,7 +70,7 @@ d3.csv(
       .duration(200)
       .delay(1000)
       .style("stroke", function (d) {
-        return color(d.Species);
+        return color(d.age_group);
       })
       .style("opacity", "1");
   };
@@ -73,24 +85,24 @@ d3.csv(
   }
 
   // Draw the lines
-  svg
+  line_svg
     .selectAll("myPath")
     .data(data)
     .join("path")
     .attr("class", function (d) {
-      return "line " + d.Species;
+      return "line " + d.age_group;
     }) // 2 class for each line: 'line' and the group name
     .attr("d", path)
     .style("fill", "none")
     .style("stroke", function (d) {
-      return color(d.Species);
+      return color(d.age_group);
     })
     .style("opacity", 0.5)
     .on("mouseover", highlight)
     .on("mouseleave", doNotHighlight);
 
   // Draw the axis:
-  svg
+  line_svg
     .selectAll("myAxis")
     // For each dimension of the dataset I add a 'g' element:
     .data(dimensions)
@@ -113,4 +125,13 @@ d3.csv(
       return d;
     })
     .style("fill", "black");
-});
+
+  line_svg
+    .append("text")
+    .attr("x", width / 2)
+    .attr("y", margin.top - 10)
+    .attr("text-anchor", "middle")
+    .style("font-size", "16px")
+    .style("text-decoration", "underline")
+    .text("Protien Levels vs Age Group");
+}

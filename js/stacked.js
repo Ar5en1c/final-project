@@ -45,7 +45,7 @@ async function draw_stacked() {
   // Create a tooltip
   // ----------------
   const tooltip = d3
-    .select("#bubble_1")
+    .select("#stack_plot")
     .append("div")
     .style("opacity", 0)
     .attr("class", "tooltip")
@@ -94,6 +94,14 @@ async function draw_stacked() {
     .on("mouseover", mouseover)
     .on("mousemove", mousemove)
     .on("mouseleave", mouseleave);
+
+  svgStacked.append("text")
+    .attr("x", (width / 2))
+    .attr("y", (margin.top) - 30)
+    .attr("text-anchor", "middle")
+    .style("font-size", "16px")
+    .style("text-decoration", "underline")
+    .text("CVD Diseases Distribution vs centers");
 }
 
 draw_stacked();
