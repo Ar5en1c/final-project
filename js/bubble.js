@@ -80,13 +80,14 @@ d3.csv("./data/trend.csv").then(function (data) {
   };
 
   bubble_svg
-  .append("text")
-  .attr("x", width / 2)
-  .attr("y", margin.top - 55)
-  .attr("text-anchor", "middle")
-  .style("font-size", "16px")
-  .style("text-decoration", "underline")
-  .text("Number of Cases vs year");
+    .append("text")
+    .attr("x", width / 2)
+    .attr("y", margin.top - 55)
+    .attr("text-anchor", "middle")
+    .style("font-size", "16px")
+    .attr("fill", "white")
+    .style("text-decoration", "underline")
+    .text("Number of Cases vs year");
 
   // Draw the line
   bubble_svg

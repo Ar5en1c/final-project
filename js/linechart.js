@@ -133,5 +133,6 @@ function draw_cood(data) {
     .attr("text-anchor", "middle")
     .style("font-size", "16px")
     .style("text-decoration", "underline")
+    .attr("fill", "white")
     .text("Protien Levels vs Age Group");
 }

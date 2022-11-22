@@ -124,6 +124,7 @@ async function drawscmat() {
         .attr("x", size / 2)
         .attr("y", size / 2)
         .text(var1)
+        .attr("fill", "white")
         .attr("text-anchor", "middle");
     }
   }

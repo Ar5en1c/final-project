@@ -117,11 +117,12 @@ function draw_bp(dataset) {
     .style("transform", "rotate(270deg)")
     .style("text-anchor", "middle");
 
-    bp_svg
+  bp_svg
     .append("text")
     .attr("x", width / 2)
     .attr("y", margin.top - 8)
     .attr("text-anchor", "middle")
+    .attr("fill", "white")
     .style("font-size", "16px")
     .style("text-decoration", "underline")
     .text("Systolic vs Diastolic B.P.");

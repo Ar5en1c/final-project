@@ -95,11 +95,13 @@ async function draw_stacked() {
     .on("mousemove", mousemove)
     .on("mouseleave", mouseleave);
 
-  svgStacked.append("text")
-    .attr("x", (width / 2))
-    .attr("y", (margin.top) - 30)
+  svgStacked
+    .append("text")
+    .attr("x", width / 2)
+    .attr("y", margin.top - 30)
     .attr("text-anchor", "middle")
     .style("font-size", "16px")
+    .attr("fill", "white")
     .style("text-decoration", "underline")
     .text("CVD Diseases Distribution vs centers");
 }
