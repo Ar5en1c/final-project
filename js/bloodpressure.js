@@ -1,137 +1,224 @@
-const bp_svg = d3.select("#blood_pressure").append("svg");
-function draw_bp(dataset) {
-  console.log("blood");
-  bp_svg.selectAll("*").remove();
-  const xAccessor = (d) => Number(d.systolic);
-  const yAccessor = (d) => Number(d.diastolic);
+// set the dimensions and bld_margins of the graph
+const bld_margin = { top: 50, right: 50, bottom: 40, left: 50 },
+  bld_width = 500 - bld_margin.left - bld_margin.right,
+  bld_height = 320 - bld_margin.top - bld_margin.bottom;
 
-  let dimensions = {
-    width: 500,
-    height: 500,
-    margin: {
-      top: 50,
-      bottom: 50,
-      left: 50,
-      right: 50,
-    },
-  };
+// append the bld_svg object to the body of the page
+const bld_svg = d3
+  .select("#blood_pressure")
+  .append("svg")
+  .attr("width", bld_width + bld_margin.left + bld_margin.right)
+  .attr("height", bld_height + bld_margin.top + bld_margin.bottom)
+  .append("g")
+  .attr("transform", `translate(${bld_margin.left}, ${bld_margin.top})`);
 
-  dimensions.containerWidth =
-    dimensions.width - dimensions.margin.left - dimensions.margin.right;
-  dimensions.containerHeight =
-    dimensions.height - dimensions.margin.top - dimensions.margin.bottom;
+function draw_bp(data) {
+  // Add X axis
+  bld_svg.selectAll("*").remove();
+  data = data.map(function (d) {
+    return {
+      systolic: d.systolic,
+      diastolic: d.diastolic,
+      BP_Risk: d.BP_Risk,
+    };
+  });
 
-  // -1- Create a tooltip div that is hidden by default:
-  const tooltip = d3
-    .select("#blood_pressure")
-    .append("div")
-    .style("opacity", 0)
-    .attr("class", "tooltip")
-    .attr("style", "position: absolute; opacity: 0;")
-    .style("background-color", "black")
-    .style("border-radius", "5px")
-    .style("padding", "10px")
-    .style("color", "white");
-
-  // -2- Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
-  const showTooltip = function (event, d) {
-    tooltip.transition().duration(200);
-    tooltip
-      .style("opacity", 1)
-      .html("Systolic: " + d.systolic + "<br>" + "Diastolic: " + d.diastolic)
-      .style("left", event.x / 2 + "px")
-      .style("top", event.y / 2 + 30 + "px");
-  };
-  const moveTooltip = function (event, d) {
-    tooltip.style("left", event.x + "px").style("top", event.y + 10 + "px");
-  };
-  const hideTooltip = function (event, d) {
-    tooltip.transition().duration(200).style("opacity", 0);
-  };
-
-  bp_svg.attr("width", dimensions.width).attr("height", dimensions.height);
-
-  const container = bp_svg
+  const x = d3.scaleLinear().domain([60, 230]).range([0, bld_width]);
+  const xAxis = bld_svg
     .append("g")
-    .attr(
-      "transform",
-      `translate(${dimensions.margin.left}, ${dimensions.margin.top})`
-    );
+    .attr("transform", `translate(0, ${bld_height})`)
+    .call(d3.axisBottom(x));
 
-  const xScale = d3
-    .scaleLinear()
-    .domain([0, 230])
-    .clamp(true)
-    .range([0, dimensions.containerWidth]);
+  // Add Y axis
+  const y = d3.scaleLinear().domain([0, 220]).range([bld_height, 0]);
+  bld_svg.append("g").call(d3.axisLeft(y));
 
-  const yScale = d3
-    .scaleLinear()
-    .domain([0, 180])
-    .clamp(true)
-    .range([dimensions.containerHeight, 0]);
+  // Color scale: give me a specie name, I return a color
+  const color = d3
+    .scaleOrdinal()
+    .domain([
+      "Normal",
+      "pre-hypertension",
+      "hypertension grade 1",
+      "hypertension grade 2",
+      "hypertension grade 3",
+    ])
+    .range(["#39e75f", "#FFF200", "#FFA500", "#ee2400", "#900000"]);
 
-  var colorRange = d3.scaleLinear().domain([50, 180]).range(["green", "red"]);
+  // Add a clipPath: everything out of this area won't be drawn.
+  const clip = bld_svg
+    .append("defs")
+    .append("clipPath")
+    .attr("id", "clip")
+    .append("rect")
+    .attr("width", bld_width)
+    .attr("height", bld_height)
+    .attr("x", 0)
+    .attr("y", 0);
 
-  container
+  bld_svg
+    .append("circle")
+    .attr("cx", 350)
+    .attr("cy", 0)
+    .attr("r", 7)
+    .style("fill", "#900000");
+  bld_svg
+    .append("text")
+    .attr("x", 365)
+    .attr("y", 0)
+    .text("Hypertension 3")
+    .attr("fill", "white")
+    .style("font-size", "12px")
+    .attr("alignment-baseline", "middle");
+
+  bld_svg
+    .append("circle")
+    .attr("cx", 350)
+    .attr("cy", 15)
+    .attr("r", 7)
+    .style("fill", "#ee2400");
+  bld_svg
+    .append("text")
+    .attr("x", 365)
+    .attr("y", 15)
+    .text("Hypertension 2")
+    .attr("fill", "white")
+    .style("font-size", "12px")
+    .attr("alignment-baseline", "middle");
+
+  bld_svg
+    .append("circle")
+    .attr("cx", 350)
+    .attr("cy", 30)
+    .attr("r", 7)
+    .style("fill", "#FFA500");
+  bld_svg
+    .append("text")
+    .attr("x", 365)
+    .attr("y", 30)
+    .text("Hypertension 1")
+    .attr("fill", "white")
+    .style("font-size", "12px")
+    .attr("alignment-baseline", "middle");
+
+  bld_svg
+    .append("circle")
+    .attr("cx", 350)
+    .attr("cy", 45)
+    .attr("r", 7)
+    .style("fill", "#FFF200");
+  bld_svg
+    .append("text")
+    .attr("x", 365)
+    .attr("y", 45)
+    .text("Pre-hypertension")
+    .attr("fill", "white")
+    .style("font-size", "12px")
+    .attr("alignment-baseline", "middle");
+
+  bld_svg
+    .append("circle")
+    .attr("cx", 350)
+    .attr("cy", 60)
+    .attr("r", 7)
+    .style("fill", "#39e75f");
+  bld_svg
+    .append("text")
+    .attr("x", 365)
+    .attr("y", 60)
+    .text("Normal")
+    .attr("fill", "white")
+    .style("font-size", "12px")
+    .attr("alignment-baseline", "middle");
+
+  // Add brushing
+  const brush = d3
+    .brushX() // Add the brush feature using the d3.brush function
+    .extent([
+      [0, 0],
+      [bld_width, bld_height],
+    ])
+    .on("end", updateChart);
+
+  // Create the scatter variable: where both the circles and the brush take place
+  const scatter = bld_svg.append("g").attr("clip-path", "url(#clip)");
+
+  // Add circles
+  scatter
     .selectAll("circle")
-    .data(dataset)
-    .join("circle")
-    .attr("r", 5)
-    .attr("fill", function (d) {
-      return colorRange(Number(d.systolic));
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", function (d) {
+      return x(d.systolic);
     })
-    .attr("opacity", 0.3)
-    .attr("cx", (d) => xScale(xAccessor(d)))
-    .attr("cy", (d) => yScale(yAccessor(d)))
-    .on("mouseover", showTooltip)
-    .on("mousemove", moveTooltip)
-    .on("mouseleave", hideTooltip);
+    .attr("cy", function (d) {
+      return y(d.diastolic);
+    })
+    .attr("r", 5)
+    .style("fill", function (d) {
+      return color(d.BP_Risk);
+    })
+    .style("opacity", 1);
 
-  // Axes
-  const xAxis = d3.axisBottom(xScale);
+  // Add the brushing
+  scatter.append("g").attr("class", "brush").call(brush);
 
-  const xAxisGroup = container
-    .append("g")
-    .call(xAxis)
-    .style("transform", `translateY(${dimensions.containerHeight}px)`)
-    .classed("axis", true);
+  // A function that set idleTimeOut to null
+  var idleTimeout;
+  function idled() {
+    idleTimeout = null;
+  }
 
-  // already positioned at bottom
-  xAxisGroup
+  // A function that update the chart for given boundaries
+  function updateChart(event) {
+    extent = event.selection;
+
+    // If no selection, back to initial coordinate. Otherwise, update X axis domain
+    if (!extent) {
+      if (!idleTimeout) return (idleTimeout = setTimeout(idled, 350)); // This allows to wait a little bit
+      x.domain([4, 8]);
+    } else {
+      x.domain([x.invert(extent[0]), x.invert(extent[1])]);
+      scatter.select(".brush").call(brush.move, null); // This remove the grey brush area as soon as the selection has been done
+    }
+
+    // Update axis and circle position
+    xAxis.transition().duration(1000).call(d3.axisBottom(x));
+    scatter
+      .selectAll("circle")
+      .transition()
+      .duration(1000)
+      .attr("cx", function (d) {
+        return x(d.systolic);
+      })
+      .attr("cy", function (d) {
+        return y(d.diastolic);
+      });
+
+    // If user double click, reinitialize the chart
+    bld_svg.on("dblclick", function () {
+      x.domain([60, 230]);
+      xAxis.transition().call(d3.axisBottom(x));
+      scatter
+        .selectAll("circle")
+        .transition()
+        .duration(1000)
+        .attr("cx", function (d) {
+          return x(d.systolic);
+        })
+        .attr("cy", function (d) {
+          return y(d.diastolic);
+        });
+    });
+  }
+  bld_svg
     .append("text")
-    .attr("x", dimensions.containerWidth / 2)
-    .attr("y", dimensions.margin.bottom - 10)
-    .attr("fill", "white")
-    .text("Systolic (mmHg)");
-
-  const yAxis = d3.axisLeft(yScale);
-
-  const yAxisGroup = container.append("g").call(yAxis).classed("axis", true);
-
-  yAxisGroup
-    .append("text")
-    .attr("x", -dimensions.containerHeight / 2)
-    .attr("y", -dimensions.margin.left + 15)
-    .attr("fill", "white")
-    .html("Diastolic (mmHg)")
-    .style("transform", "rotate(270deg)")
-    .style("text-anchor", "middle");
-
-  bp_svg
-    .append("text")
-    .attr("x", width / 2)
-    .attr("y", margin.top - 8)
+    .attr("x", bld_width / 2)
+    .attr("y", -30)
     .attr("text-anchor", "middle")
-    .attr("fill", "white")
     .style("font-size", "16px")
+    .attr("fill", "white")
     .style("text-decoration", "underline")
-    .text("Systolic vs Diastolic B.P.");
-
-  // container.append('rect')
-  //   .attr('x', 0 + dimensions.margin.left - 15)
-  //   .attr('y', 10 + dimensions.containerHeight - dimensions.margin.bottom + 10 )
-  //   .attr('width', 100)
-  //   .attr('height', 100)
-  //   .attr('stroke', 'black')
-  //   .attr('fill', '#blue')
+    .text("Bloodpressure Distrbution");
 }

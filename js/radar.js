@@ -1,19 +1,86 @@
-function RadarChart(id, data, options) {
+var radar_margin = { top: 50, right: 50, bottom: 40, left: 50 },
+  radar_width = 400,
+  radar_height = 300;
+
+function RadarChart(id, dataset) {
+  //rdr_svg.selectAll("*").remove();
+  d3.select(id).select("svg").remove();
+  const rdr_svg = d3.select("#radar_plot").append("svg");
+  rdr_svg
+    .attr("width", 500)
+    .attr("height", 320)
+    .attr("class", "radar" + id);
+
+  d3.mean(dataset, (d) => d.microalbuminuria);
+  var data = [
+    [
+      { axis: "Albumin", value: 30 },
+      { axis: "Creatinine", value: 0.8 },
+      { axis: "Hemoglobin", value: 80 },
+      { axis: "Cholestrol", value: 180 },
+      { axis: "BMI", value: 22 },
+      { axis: "Glycemia", value: 90 },
+      { axis: "Triglycerides", value: 150 },
+      { axis: "HDL", value: 60 },
+    ],
+    [
+      { axis: "Albumin", value: d3.mean(dataset, (d) => d.microalbuminuria) },
+      { axis: "Creatinine", value: d3.mean(dataset, (d) => d.creatinine) },
+      {
+        axis: "Hemoglobin",
+        value: d3.mean(dataset, (d) => d.glycated_hemoglobin),
+      },
+      { axis: "Cholestrol", value: d3.mean(dataset, (d) => d.cholesterol) },
+      { axis: "BMI", value: d3.mean(dataset, (d) => d.BMI) * 10000 },
+      { axis: "Glycemia", value: d3.mean(dataset, (d) => d.glycemia) },
+      {
+        axis: "Triglycerides",
+        value: d3.mean(dataset, (d) => d.triglycerides),
+      },
+      { axis: "HDL", value: d3.mean(dataset, (d) => d.HDL) },
+    ],
+  ];
+
+  var radar_color = d3
+    .scaleOrdinal()
+    .range(["green", "#bc6c25", "green", "#bc6c25"]);
+
+  var options = {
+    w: radar_width,
+    h: radar_height,
+    margin: radar_margin,
+    maxValue: 0.5,
+    levels: 4,
+    roundStrokes: true,
+    color: radar_color,
+  };
+
   var cfg = {
     w: 500, //Width of the circle
-    h: 490, //Height of the circle
-    margin: { top: 30, right: 30, bottom: 15, left: 50 }, //The margins of the SVG
+    h: 320, //Height of the circle
+    margin: { top: 50, right: 50, bottom: 40, left: 50 }, //The margins of the rdr_svg
     levels: 3, //How many levels or inner circles should there be drawn
     maxValue: 0, //What is the value that the biggest circle will represent
     labelFactor: 1.25, //How much farther than the radius of the outer circle should the labels be placed
     wrapWidth: 60, //The number of pixels after which a label needs to be given a new line
-    opacityArea: 0.35, //The opacity of the area of the blob
+    opacityArea: 0.5, //The opacity of the area of the blob
     dotRadius: 4, //The size of the colored circles of each blog
     opacityCircles: 0.1, //The opacity of the circles of each blob
     strokeWidth: 2, //The width of the stroke around each blob
     roundStrokes: false, //If true the area and stroke will follow a round path (cardinal-closed)
     color: d3.scaleOrdinal(d3.schemeCategory10), //Color function
   };
+
+  var scaleList = [
+    [0, 15, 30, 45, 60], //"Albumin"
+    [0, 0.5, 1, 1.5, 2], //"Creatinine"
+    [0, 25, 50, 75, 100], //"Hemoglobin":
+    [0, 75, 150, 225, 300], //"Cholesterol"
+    [0, 12, 24, 36, 50], //"BMI":
+    [0, 50, 100, 150, 200], //"Glycemia"
+    [0, 125, 250, 375, 500], //"Triglycerides"
+    [0, 50, 100, 150, 200], //"HDL"
+  ];
 
   //Put all of the options into a variable called cfg
   if ("undefined" !== typeof options) {
@@ -40,42 +107,24 @@ function RadarChart(id, data, options) {
       return i.axis;
     }), //Names of each axis
     total = allAxis.length, //The number of different axes
-    radius = Math.min(cfg.w / 2.3, cfg.h / 2.3), //Radius of the outermost circle
-    Format = d3.format("%"), //Percentage formatting
+    radius = Math.min(cfg.w / 3, cfg.h / 2.8), //Radius of the outermost circle
+    Format = d3.format(".1f"), //Percentage formatting
     angleSlice = (Math.PI * 2) / total; //The width in radians of each "slice"
 
-  //Scale for the radius
-  var rScale = d3.scaleLinear().range([0, radius]).domain([0, maxValue]);
-
-  //Remove whatever chart with the same id/class was present before
-  // d3.select("#radar_plot").select("svg").remove();
-
-  //Initiate the radar chart SVG
-  var svg = d3
-    .select("#radar_plot")
-    .append("svg")
-    .attr("width", 500)
-    .attr("height", 500)
-    .attr("class", "radar" + id);
-  //Append a g element
-  var g = svg
+  var g = rdr_svg
     .append("g")
     .attr(
       "transform",
-      "translate(" +
-        (cfg.w / 1.5 + cfg.margin.left) +
-        "," +
-        (cfg.h / 1.7 + cfg.margin.top) +
-        ")"
+      "translate(" + (cfg.w / 2 + cfg.margin.left) + "," + cfg.h / 1.9 + ")"
     );
 
   //title code
-  svg
+  rdr_svg
     .append("text")
-    .attr("x", width / 2)
-    .attr("y", margin.top * 2)
+    .attr("x", 500 / 2)
+    .attr("y", 20)
     .attr("text-anchor", "middle")
-    // .style("font-size", "16px")
+    .style("font-size", "16px")
     .attr("fill", "white")
     .style("text-decoration", "underline")
     .text("Normal Readings vs Selected Disease Readings");
@@ -108,24 +157,16 @@ function RadarChart(id, data, options) {
     .style("fill-opacity", cfg.opacityCircles)
     .style("filter", "url(#glow)");
 
-  //Text indicating at what % each level is
-  axisGrid
-    .selectAll(".axisLabel")
-    .data(d3.range(1, cfg.levels + 1).reverse())
-    .enter()
-    .append("text")
-    .attr("class", "axisLabel")
-    .attr("x", 4)
-    .attr("y", function (d) {
-      return (-d * radius) / cfg.levels;
-    })
-    .attr("dy", "0.4em")
-    .style("font-size", "10px")
-    .attr("fill", "white")
-    .text(function (d, i) {
-      return Format((maxValue * d) / cfg.levels);
-    });
-
+  var rScaleList = [
+    d3.scaleLinear().range([0, radius]).domain([0, scaleList[0][4]]), //"Length"
+    d3.scaleLinear().range([0, radius]).domain([0, scaleList[1][4]]), //"Width"
+    d3.scaleLinear().range([0, radius]).domain([0, scaleList[2][4]]), //"Wheel base":
+    d3.scaleLinear().range([0, radius]).domain([0, scaleList[3][4]]), //"Retail price"
+    d3.scaleLinear().range([0, radius]).domain([0, scaleList[4][4]]), //"Engine size":
+    d3.scaleLinear().range([0, radius]).domain([0, scaleList[5][4]]),
+    d3.scaleLinear().range([0, radius]).domain([0, scaleList[6][4]]),
+    d3.scaleLinear().range([0, radius]).domain([0, scaleList[7][4]]), //"HorsePower"
+  ];
   //Create the straight lines radiating outward from the center
   var axis = axisGrid
     .selectAll(".axis")
@@ -133,16 +174,52 @@ function RadarChart(id, data, options) {
     .enter()
     .append("g")
     .attr("class", "axis");
+
+  //scale
+  for (let echelleNumero = 0; echelleNumero < 8; echelleNumero++) {
+    axis
+      .append("text")
+      .attr("class", "textscale")
+      .style("font-size", "10px")
+      .attr("fill", "#737373")
+      .data(scaleList[echelleNumero])
+      .attr("x", 4) // decale echelle  en abscisse
+      .attr("dy", "-8")
+      .attr("y", function (d, i) {
+        return (-radius * i) / scaleList[echelleNumero].length;
+      }) // gere espacement entre données en y
+      .attr("transform", function (d, i) {
+        var angleI = (angleSlice * echelleNumero * 180) / Math.PI; // the angle to rotate the label
+        var flip = angleI < 90 || angleI > 270 ? false : true; // 180 if label needs to be flipped
+        if (flip == true) {
+          return "rotate(" + angleI + ")";
+        } else {
+          return "rotate(" + angleI + ")";
+        }
+      })
+      .text(function (d) {
+        if (echelleNumero == 0) {
+          return Format(d);
+        } else {
+          if (d != 0) {
+            return Format(d);
+          } else {
+            return;
+          }
+        }
+      });
+  }
   //Append the lines
+
   axis
     .append("line")
     .attr("x1", 0)
     .attr("y1", 0)
     .attr("x2", function (d, i) {
-      return rScale(maxValue * 1.1) * Math.cos(angleSlice * i - Math.PI / 2);
+      return radius * Math.cos(angleSlice * i - Math.PI / 2);
     })
     .attr("y2", function (d, i) {
-      return rScale(maxValue * 1.1) * Math.sin(angleSlice * i - Math.PI / 2);
+      return radius * Math.sin(angleSlice * i - Math.PI / 2);
     })
     .attr("class", "line")
     .style("stroke", "white")
@@ -155,18 +232,12 @@ function RadarChart(id, data, options) {
     .style("font-size", "11px")
     .attr("text-anchor", "middle")
     .attr("fill", "white")
-    .attr("dy", "0.35em")
+    .attr("dy", "1px")
     .attr("x", function (d, i) {
-      return (
-        rScale(maxValue * cfg.labelFactor) *
-        Math.cos(angleSlice * i - Math.PI / 2)
-      );
+      return radius * 1.3 * Math.cos(angleSlice * i - Math.PI / 2);
     })
     .attr("y", function (d, i) {
-      return (
-        rScale(maxValue * cfg.labelFactor) *
-        Math.sin(angleSlice * i - Math.PI / 2)
-      );
+      return radius * 1.1 * Math.sin(angleSlice * i - Math.PI / 2);
     })
     .text(function (d) {
       return d;
@@ -177,8 +248,8 @@ function RadarChart(id, data, options) {
   var radarLine = d3
     .lineRadial()
     .curve(d3.curveLinearClosed)
-    .radius(function (d) {
-      return rScale(d.value);
+    .radius(function (d, i) {
+      return rScaleList[i](d.value);
     })
     .angle(function (d, i) {
       return i * angleSlice;
@@ -249,10 +320,10 @@ function RadarChart(id, data, options) {
     .attr("class", "radarCircle")
     .attr("r", cfg.dotRadius)
     .attr("cx", function (d, i) {
-      return rScale(d.value) * Math.cos(angleSlice * i - Math.PI / 2);
+      return rScaleList[i](d.value) * Math.cos(angleSlice * i - Math.PI / 2);
     })
     .attr("cy", function (d, i) {
-      return rScale(d.value) * Math.sin(angleSlice * i - Math.PI / 2);
+      return rScaleList[i](d.value) * Math.sin(angleSlice * i - Math.PI / 2);
     })
     .style("fill", function (d, i, j) {
       return cfg.color(j);
@@ -278,10 +349,10 @@ function RadarChart(id, data, options) {
     .attr("class", "radarInvisibleCircle")
     .attr("r", cfg.dotRadius * 1.5)
     .attr("cx", function (d, i) {
-      return rScale(d.value) * Math.cos(angleSlice * i - Math.PI / 2);
+      return rScaleList[i](d.value) * Math.cos(angleSlice * i - Math.PI / 2);
     })
     .attr("cy", function (d, i) {
-      return rScale(d.value) * Math.sin(angleSlice * i - Math.PI / 2);
+      return rScaleList[i](d.value) * Math.sin(angleSlice * i - Math.PI / 2);
     })
     .style("fill", "none")
     .style("pointer-events", "all")
@@ -289,7 +360,7 @@ function RadarChart(id, data, options) {
       newX = parseFloat(d3.select(this).attr("cx")) - 10;
       newY = parseFloat(d3.select(this).attr("cy")) - 10;
 
-      tooltip
+      rdr_tooltip
         .attr("x", newX)
         .attr("y", newY)
         .text(Format(d.value))
@@ -298,14 +369,17 @@ function RadarChart(id, data, options) {
         .style("opacity", 1);
     })
     .on("mouseout", function () {
-      tooltip.transition().duration(200).style("opacity", 0);
+      rdr_tooltip.transition().duration(200).style("opacity", 0);
     });
 
-  //Set up the small tooltip for when you hover over a circle
-  var tooltip = g.append("text").attr("class", "tooltip").style("opacity", 0);
+  //Set up the small rdr_tooltip for when you hover over a circle
+  var rdr_tooltip = g
+    .append("text")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
 
   //Taken from http://bl.ocks.org/mbostock/7555321
-  //Wraps SVG text
+  //Wraps rdr_svg text
   function wrap(text, width) {
     text.each(function () {
       var text = d3.select(this),
