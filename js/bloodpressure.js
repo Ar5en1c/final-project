@@ -221,4 +221,25 @@ function draw_bp(data) {
     .attr("fill", "white")
     .style("text-decoration", "underline")
     .text("Bloodpressure Distrbution");
+
+  bld_svg
+    .append("text")
+    .attr("class", "y label")
+    .attr("text-anchor", "end")
+    .attr("y", -45)
+    .attr("x", -80)
+    .attr("dy", ".75em")
+    .attr("transform", "rotate(-90)")
+    .text("Diastolic")
+    .attr("fill", "white");
+
+  bld_svg
+    .append("text")
+    .attr("class", "x label")
+    .attr("text-anchor", "middle")
+    .attr("y", 250)
+    .attr("x", 180)
+    .attr("dy", ".75em")
+    .text("Systolic")
+    .attr("fill", "white");
 }
